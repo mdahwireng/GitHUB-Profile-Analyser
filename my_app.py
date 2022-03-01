@@ -29,10 +29,12 @@ def resultant_data(user_info,username,password):
         repos_json = repos_request.json()
         repos_list = []
 
-        urls_1 = []
-        urls_2 = []
+        urls_1 = [] # clones urls
+        urls_2 = [] # views urls
         for i in range(len(repos_json)):
+            # Retrieve the url for the number of clones
             urls_1.append('https://api.github.com/repos/'+user_info_json['login']+'/'+repos_json[i]['name']+'/traffic/clones')
+            # Retrieve the url for the number of views
             urls_2.append('https://api.github.com/repos/'+user_info_json['login']+'/'+repos_json[i]['name']+'/traffic/views')
 
         response_clone_list = []
@@ -56,8 +58,11 @@ def resultant_data(user_info,username,password):
         values_for_dict = [user_info_json['avatar_url'],user_info_json['email'],user_info_json['followers'],user_info_json['following'],user_info_json['name'],user_info_json['login'],user_info_json['bio'],user_info_json['url'],user_info_json['public_repos'],repos_list]
         result_dict = dict(zip(keys_for_dict,values_for_dict))
         for i in result_dict['repos_list']:
+            # Add the clones, forks, unique traffic and watchers as a measure of popularity
             i.append(i[1]+i[2]+i[3]+i[5])
+        # Sort the repos list by the computed popularity measure
         result_dict['repos_list'].sort(key=lambda x:x[-1],reverse=True)
+        # Compute the numbers to be used for ordering in the table display
         for i in range(len(result_dict['repos_list'])):
             result_dict['repos_list'][i].insert(0,i+1)
         return result_dict
@@ -75,12 +80,12 @@ def login_check():
         if 'data' in session:
             return render_template('main.html',data=session['data'],graph_x=session['graph_x'],graph_y=session['graph_y'])
         elif request.method == "POST":
-    	    attempted_username = request.form['userid']
-    	    attempted_password = request.form['password']
-    	    check_user = requests.get('https://api.github.com/user', auth=(attempted_username, attempted_password))
-    	    if check_user.status_code == 200:
-    	    	data=resultant_data(check_user,attempted_username, attempted_password)
-    	    	if type(data)==dict:
+            attempted_username = request.form['userid']
+            attempted_password = request.form['password']
+            check_user = requests.get('https://api.github.com/user', auth=(attempted_username, attempted_password))
+            if check_user.status_code == 200:
+                data=resultant_data(check_user,attempted_username, attempted_password)
+                if type(data)==dict:
                         # graph_x_list = []
                         graph_y_list = []
 
@@ -91,10 +96,10 @@ def login_check():
                         session['graph_y'] = graph_y_list
                         if 'data' in session:
                             return render_template('main.html',data=session['data'],graph_y=session['graph_y'])
-    	    	else:
-                        return render_template('index.html',error=data)
-    	    else:
-    	    	return render_template("index.html",error=check_user.json()['message'])
+                        else:
+                            return render_template('index.html',error=data)
+                else:
+                    return render_template("index.html",error=check_user.json()['message'])
         else:
             return render_template("index.html")
     except Exception as e:
