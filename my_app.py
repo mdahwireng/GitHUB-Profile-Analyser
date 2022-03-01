@@ -45,6 +45,7 @@ def resultant_data(user_info,username,password):
         for response_clone, error in raw_results_1:
             if error is None:
                 response_clone_list.append(response_clone.json()['count'])
+        
         raw_results_2 = ThreadPool(20).map(fetch_url, urls_2)
         for response_clone, error in raw_results_2:
             if error is None:
@@ -54,14 +55,18 @@ def resultant_data(user_info,username,password):
         for i in range(len(repos_json)):
             #repos_list contains name of repo,watchers_count,language used,forks_count,clones_count
             repos_list.append([repos_json[i]['name'],response_clone_list[i],repos_json[i]['forks_count'],response_unique_traffic_list[i],response_total_traffic_list[i],repos_json[i]['watchers_count']])
+        
         keys_for_dict = ['avatar','email','followers','following','name','username','bio','url','public_repos','repos_list']
         values_for_dict = [user_info_json['avatar_url'],user_info_json['email'],user_info_json['followers'],user_info_json['following'],user_info_json['name'],user_info_json['login'],user_info_json['bio'],user_info_json['url'],user_info_json['public_repos'],repos_list]
         result_dict = dict(zip(keys_for_dict,values_for_dict))
+        
         for i in result_dict['repos_list']:
             # Add the clones, forks, unique traffic and watchers as a measure of popularity
             i.append(i[1]+i[2]+i[3]+i[5])
+        
         # Sort the repos list by the computed popularity measure
         result_dict['repos_list'].sort(key=lambda x:x[-1],reverse=True)
+        
         # Compute the numbers to be used for ordering in the table display
         for i in range(len(result_dict['repos_list'])):
             result_dict['repos_list'][i].insert(0,i+1)
